@@ -6,18 +6,15 @@
   <br>
 </h1>
 <h3 align="center">
-  <b>Sollaxx Engine Classic was made to bring back the old FNF 2021 to make it have .</b>
+  <b>Sollaxx Engine Classic was made to bring back the old FNF 2021 to make it have modern features.</b>
 </h3>
-
-
 
 Work in Progress
 
 If you wish to port your Psych Engine mod to Sollaxx Engine it's very easy to do that.
 
-Sollaxx Engine Classic & original is compatible with mods from Psych Engine. Tho some stuff like scripts/events may break. as this is still in experimental. We don't know if Psych 0.5.2h mods and older are compatible but you can try. Psych 0.6.3 mods and up are fully compatible!
+Sollaxx Engine Classic & original are compatible with mods from Psych Engine. Tho some stuff like scripts/events may break. as this is still in experimental. We don't know if Psych 0.5.2h mods and older are compatible but you can try. Psych 0.6.3 mods work the best.
 
-Warning: Backport may not work for Psych older than 1.0.
 
 
 

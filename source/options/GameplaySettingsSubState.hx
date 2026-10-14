@@ -51,6 +51,18 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 			'bool');
 		addOption(option);
 
+		var option:Option = new Option('CPU Strum Glow',
+			'If unchecked, the opponent strums stay still when the CPU hits notes\n(like 0.2.5).',
+			'cpuStrumGlow',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Classic Opponent Idle',
+			'If checked, the opponent only bops while the camera is on you,\nand Dad / Pico / Monster loop their idle (like 0.2.5).',
+			'classicIdle',
+			'bool');
+		addOption(option);
+
 		var option:Option = new Option('Ghost Tapping',
 			"If checked, you won't get misses from pressing keys\nwhile there are no notes able to be hit.",
 			'ghostTapping',

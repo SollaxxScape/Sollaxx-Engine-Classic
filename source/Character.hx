@@ -62,6 +62,9 @@ class Character extends FlxSprite
 	public var idleSuffix:String = '';
 	public var danceIdle:Bool = false; //Character use "danceLeft" and "danceRight" instead of "idle"
 	public var skipDance:Bool = false;
+	/** Characters whose idle loops on its own in 0.2.5 (Classic Opponent Idle). */
+	public static var classicLoopIdleChars:Array<String> = ['dad', 'pico', 'monster'];
+	public var loopsIdle:Bool = false;
 
 	public var healthIcon:String = 'face';
 	public var animationsArray:Array<AnimArray> = [];
@@ -213,6 +216,17 @@ class Character extends FlxSprite
 		originalFlipX = flipX;
 
 		if(animOffsets.exists('singLEFTmiss') || animOffsets.exists('singDOWNmiss') || animOffsets.exists('singUPmiss') || animOffsets.exists('singRIGHTmiss')) hasMissAnimations = true;
+		if (ClientPrefs.data.classicIdle && !isPlayer && classicLoopIdleChars.contains(curCharacter))
+		{
+			loopsIdle = true;
+			for (n in ['idle', 'idle-alt'])
+			{
+				var a = animation.getByName(n);
+				if (a != null)
+					a.looped = true;
+			}
+		}
+
 		recalculateDanceIdle();
 		dance();
 

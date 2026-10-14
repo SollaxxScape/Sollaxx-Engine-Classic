@@ -32,15 +32,27 @@ class VisualsUISubState extends BaseOptionsMenu
 		title = 'Visuals and UI';
 		rpcTitle = 'Visuals & UI Settings Menu'; //for Discord Rich Presence
 
-		var option:Option = new Option('Note Splashes',
-			"If unchecked, hitting \"Sick!\" notes won't show particles.",
-			'noteSplashes',
-			'bool');
-		addOption(option);
-
 		var option:Option = new Option('Hide HUD',
 			'If checked, hides most HUD elements.',
 			'hideHud',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Classic HUD',
+			'If checked, the gameplay HUD looks like FNF 0.2.5\n(plain score text, red/green health bar, no time bar).',
+			'classicHud',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Broken Hold Notes',
+			'If checked, hold notes use the old (0.2.5) look: see-through pieces that are\nnot clipped at the strum, draw over it and vanish before the screen border.',
+			'brokenHolds',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Kade Status Bar',
+			'If checked, shows Score | Combo Breaks | Accuracy | Rank\nunder the health bar like Kade Engine.',
+			'kadeStatusBar',
 			'bool');
 		addOption(option);
 		

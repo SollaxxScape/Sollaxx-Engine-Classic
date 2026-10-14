@@ -93,7 +93,7 @@ class Main extends Sprite
 		dateNow = dateNow.replace(" ", "_");
 		dateNow = dateNow.replace(":", "'");
 
-		path = "./crash/" + "PsychEngine_" + dateNow + ".txt";
+		path = "./crash/" + "SollaxxEngineClassic_" + dateNow + ".txt";
 
 		for (stackItem in callStack)
 		{
@@ -112,7 +112,7 @@ class Main extends Sprite
 		 * please remember to actually modify the link for the github page to report the issues to.
 		*/
 		#if officialBuild
-		errMsg += "\nPlease report this error to the GitHub page: https://github.com/CrowPlexus-FNF/FNF-LegacyPsych\n\n> Crash Handler written by: sqirra-rng";
+		errMsg += "\nPlease report this error to the GitHub page: https://github.com/SollaxxScape/Sollaxx-Engine-Classic\n\n> Crash Handler written by: sqirra-rng";
 		#else
 		trace("[Main.hx:115]: If you plan on open sourcing your mod, you MIGHT wanna check this out and change the link two lines above this one.");
 		#end

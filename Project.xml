@@ -2,7 +2,7 @@
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="Friday Night Funkin': Sollaxx Engine Classic" file="PsychEngine" packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine" main="Main" version="0.2.5" company="ShadowMario" />
+	<app title="Friday Night Funkin': Sollaxx Engine Classic" file="PsychEngine" packageName="com.sollaxxscape.sollaxxengineclassic" package="com.sollaxxscape.sollaxxengineclassic" main="Main" version="0.2.5" company="SollaxxScape" />
 
 	<!-- NOTE TO SELF: DISABLE THIS IF ISSUES ARE FOUND -->
 	<haxedef name="LINC_LUA_RELATIVE_DYNAMIC_LIB"/> <!-- stable luas PUT AFTER FIRST LINE WITH APP NAME AND ETC -->
@@ -45,12 +45,14 @@
 	<define name="LUA_ALLOWED" if="desktop" />
 	<define name="ACHIEVEMENTS_ALLOWED" />
 	<define name="CRASH_HANDLER" if="desktop release" />
-
+	<define name="CHECK_FOR_UPDATES" if="desktop officialBuild"/>
+	
 	<section if="officialBuild">
 		<!--Heads up! Videos are automatically disabled
 			If you want to reenable them, move the line bellow out of this section -->
 		<define name="VIDEOS_ALLOWED" if="web || windows" unless="32bits"/>
 		<define name="TITLE_SCREEN_EASTER_EGG" if="officialBuild"/>
+		
 	</section>
 
 	<assets path="assets/preload" rename="assets" exclude="*.ogg" if="web"/>
@@ -61,7 +63,7 @@
 	</section>
 
 	<!-- DONT ENABLE THIS -->
-	<define name="CHECK_FOR_UPDATES" if="desktop officialBuild"/>
+	
 
 	<!-- <define name="PRELOAD_ALL" /> -->
 	<define name="PRELOAD_ALL" unless="web" />
@@ -76,7 +78,7 @@
 		<library name="week4"         preload="true" />
 		<library name="week5"         preload="true" />
 		<library name="week6"         preload="true" />
-		<library name="week7"         preload="true" />
+		<library name="week7"         preload="false" />
 	</section>
 	
 	<section if="NO_PRELOAD_ALL">

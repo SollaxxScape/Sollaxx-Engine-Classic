@@ -28,8 +28,11 @@ class SaveVariables {
 
 	// -- VISUAL OPTIONS -- //
 	public var hideHud:Bool = false;
+	public var cpuStrumGlow:Bool = false; // opponent strums light up when the CPU hits a note (0.2.5 never did)
+	public var brokenHolds:Bool = true; // old (0.2.5) hold note look: stretched see-through pieces, not clipped at the strum
+	public var kadeStatusBar:Bool = false; // Kade Engine score / combo breaks / accuracy / rank bar
+	public var classicIdle:Bool = true; // 0.2.5 opponent idle rules (camera gated, dad/pico loop)
 	public var classicHud:Bool = true; // FNF 0.2.5 gameplay look (score text, health bar, icon bop, no time bar)
-	public var noteSplashes:Bool = true;
 	public var arrowHSV:Array<Array<Int>> = [
 	  [0, 0, 0], // Left
 	  [0, 0, 0], // DOwn

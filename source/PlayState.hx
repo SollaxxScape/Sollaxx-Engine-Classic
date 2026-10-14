@@ -64,7 +64,7 @@ using StringTools;
 
 class PlayState extends MusicBeatState
 {
-	public static var STRUM_X = 42;
+	public static var STRUM_X = 0;
 	public static var STRUM_X_MIDDLESCROLL = -278;
 
 	public static var ratingStuff:Array<Dynamic> = [
@@ -144,7 +144,6 @@ class PlayState extends MusicBeatState
 	public var strumLineNotes:FlxTypedGroup<StrumNote>;
 	public var opponentStrums:FlxTypedGroup<StrumNote>;
 	public var playerStrums:FlxTypedGroup<StrumNote>;
-	public var grpNoteSplashes:FlxTypedGroup<NoteSplash>;
 
 	public var camZooming:Bool = false;
 	public var camZoomingMult:Float = 1;
@@ -361,7 +360,6 @@ class PlayState extends MusicBeatState
 		FlxG.cameras.reset(camGame);
 		FlxG.cameras.add(camHUD, false);
 		FlxG.cameras.add(camOther, false);
-		grpNoteSplashes = new FlxTypedGroup<NoteSplash>();
 
 		FlxG.cameras.setDefaultDrawTarget(camGame, true);
 		CustomFadeTransition.nextCamera = camOther;
@@ -1068,16 +1066,10 @@ class PlayState extends MusicBeatState
 			timeTxt.y += 3;
 		}
 
-		var splash:NoteSplash = new NoteSplash(100, 100, 0);
-		grpNoteSplashes.add(splash);
-		splash.alpha = 0.0;
-
 		opponentStrums = new FlxTypedGroup<StrumNote>();
 		playerStrums = new FlxTypedGroup<StrumNote>();
 
 		generateSong(SONG.song);
-
-		noteGroup.add(grpNoteSplashes);
 
 		camFollow = new FlxPoint();
 		camFollowPos = new FlxObject(0, 0, 1, 1);
@@ -1138,7 +1130,13 @@ class PlayState extends MusicBeatState
 		uiGroup.add(iconP2);
 		reloadHealthBarColors();
 
-		if (ClientPrefs.data.classicHud)
+		if (ClientPrefs.data.kadeStatusBar)
+		{
+			// Kade Engine 1.4.x status bar
+			scoreTxt = new FlxText(FlxG.width / 2 - 235, healthBarBG.y + 50, 0, "", 20);
+			scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		}
+		else if (ClientPrefs.data.classicHud)
 		{
 			// 0.2.5: small right-aligned text tucked under the right end of the health bar
 			scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + 30, 0, "", 20);
@@ -2340,8 +2338,56 @@ class PlayState extends MusicBeatState
 		}
 	}
 
+	/** Kade Engine rank, e.g. "(FC) AAA:" */
+	function kadeRank():String
+	{
+		var acc:Float = ratingPercent * 100;
+		if (totalPlayed == 0 || acc <= 0)
+			return 'N/A';
+
+		var fc:String;
+		if (songMisses == 0 && bads == 0 && shits == 0 && goods == 0)
+			fc = '(MFC)';
+		else if (songMisses == 0 && bads == 0 && shits == 0)
+			fc = '(GFC)';
+		else if (songMisses == 0)
+			fc = '(FC)';
+		else if (songMisses < 10)
+			fc = '(SDCB)';
+		else
+			fc = '(Clear)';
+
+		var letters:Array<Array<Dynamic>> = [
+			[99.9935, 'AAAAA'], [99.980, 'AAAA:'], [99.970, 'AAAA.'], [99.955, 'AAAA'], [99.90, 'AAA:'], [99.80, 'AAA.'],
+			[99.70, 'AAA'], [99.0, 'AA:'], [96.50, 'AA.'], [93.0, 'AA'], [90.0, 'A:'], [85.0, 'A.'], [80.0, 'A'], [70.0, 'B'], [60.0, 'C']
+		];
+		var letter:String = 'D';
+		for (l in letters)
+		{
+			if (acc >= l[0])
+			{
+				letter = l[1];
+				break;
+			}
+		}
+		return fc + ' ' + letter;
+	}
+
+	function kadeStatusText():String
+	{
+		var acc:Float = Math.round(ratingPercent * 100 * 100) / 100; // Kade's truncateFloat(accuracy, 2)
+		return 'Score:' + songScore + ' | Combo Breaks:' + songMisses + ' | Accuracy:' + acc + '% | ' + kadeRank();
+	}
+
 	public dynamic function updateScore(miss:Bool = false)
 	{
+		if (ClientPrefs.data.kadeStatusBar)
+		{
+			scoreTxt.text = kadeStatusText();
+			callOnLuas('onUpdateScore', [miss]);
+			return;
+		}
+
 		if (ClientPrefs.data.classicHud)
 		{
 			// 0.2.5: score only, no misses / rating / accuracy, no zoom tween
@@ -3329,6 +3375,8 @@ class PlayState extends MusicBeatState
 				var dunceNote:Note = unspawnNotes[0];
 				notes.insert(0, dunceNote);
 				dunceNote.spawned = true;
+				if (ClientPrefs.data.brokenHolds)
+					oldSustainSpawn(dunceNote);
 				callOnLuas('onSpawnNote', [
 					notes.members.indexOf(dunceNote),
 					dunceNote.noteData,
@@ -3437,8 +3485,20 @@ class PlayState extends MusicBeatState
 					else
 						strum = playerStrums.members[daNote.noteData];
 
-					if (daNote.isSustainNote && strum.sustainReduce)
+					// Broken Hold Notes: no clipping, the hold body draws over the strum and keeps going
+					if (daNote.isSustainNote && strum.sustainReduce && !ClientPrefs.data.brokenHolds)
 						daNote.clipToStrumNote(strum);
+
+					// Broken Hold Notes: the hold vanishes between the strum and the screen border,
+					// it never scrolls off the screen. Visual only: the note itself is still killed
+					// (and missed, if it was never hit) by the normal kill below.
+					if (ClientPrefs.data.brokenHolds && daNote.isSustainNote)
+					{
+						var borderY:Float = strumScroll ? FlxG.height : 0;
+						var vanishY:Float = strum.y + (borderY - strum.y) * oldSustainVanish;
+						if (strumScroll ? (daNote.y + daNote.height >= vanishY) : (daNote.y <= vanishY))
+							daNote.visible = false;
+					}
 
 					// Kill extremely late notes and cause misses
 					if (Conductor.songPosition > noteKillOffset + daNote.strumTime)
@@ -4360,9 +4420,6 @@ class PlayState extends MusicBeatState
 		note.rating = daRating.name;
 		score = daRating.score;
 
-		if (daRating.noteSplash && !note.noteSplashDisabled)
-			spawnNoteSplashOnNote(note);
-
 		if (!practiceMode && !cpuControlled)
 		{
 			songScore += score;
@@ -4828,11 +4885,15 @@ class PlayState extends MusicBeatState
 
 		vocals.volume = 1;
 
+		if (note.isSustainNote && !note.gfNote)
+			lastOpponentSustainHit = Conductor.songPosition;
+
 		var time:Float = 0.15;
 		if (note.isSustainNote && !note.animation.curAnim.name.endsWith('end'))
 			time += 0.15;
 
-		StrumPlayAnim(true, Std.int(Math.abs(note.noteData)), time);
+		if (ClientPrefs.data.cpuStrumGlow)
+			StrumPlayAnim(true, Std.int(Math.abs(note.noteData)), time);
 		note.hitByOpponent = true;
 
 		if (!note.isSustainNote)
@@ -4874,11 +4935,6 @@ class PlayState extends MusicBeatState
 			}
 
 			noteMiss(note);
-			if (!note.noteSplashDisabled && !note.isSustainNote)
-			{
-				spawnNoteSplashOnNote(note);
-			}
-
 			if (!note.isSustainNote)
 				invalidateNote(note);
 			return;
@@ -4951,46 +5007,6 @@ class PlayState extends MusicBeatState
 		note.kill();
 		notes.remove(note, true);
 		note.destroy();
-	}
-
-	public function spawnNoteSplashOnNote(note:Note)
-	{
-		if (ClientPrefs.data.noteSplashes && note != null)
-		{
-			var strum:StrumNote = playerStrums.members[note.noteData];
-			if (strum != null)
-			{
-				spawnNoteSplash(strum.x, strum.y, note.noteData, note);
-			}
-		}
-	}
-
-	public function spawnNoteSplash(x:Float, y:Float, data:Int, ?note:Note = null)
-	{
-		var skin:String = 'noteSplashes';
-		if (PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0)
-			skin = PlayState.SONG.splashSkin;
-
-		var hue:Float = 0;
-		var sat:Float = 0;
-		var brt:Float = 0;
-		if (data > -1 && data < ClientPrefs.data.arrowHSV.length)
-		{
-			hue = ClientPrefs.data.arrowHSV[data][0] / 360;
-			sat = ClientPrefs.data.arrowHSV[data][1] / 100;
-			brt = ClientPrefs.data.arrowHSV[data][2] / 100;
-			if (note != null)
-			{
-				skin = note.noteSplashTexture;
-				hue = note.noteSplashHue;
-				sat = note.noteSplashSat;
-				brt = note.noteSplashBrt;
-			}
-		}
-
-		var splash:NoteSplash = grpNoteSplashes.recycle(NoteSplash);
-		splash.setupNoteSplash(x, y, data, skin, hue, sat, brt);
-		grpNoteSplashes.add(splash);
 	}
 
 	var fastCarCanDrive:Bool = true;
@@ -5317,6 +5333,52 @@ class PlayState extends MusicBeatState
 		callOnLuas('onBeatHit', []);
 	}
 
+	// ---- Broken Hold Notes: old (0.2.5) sustain look, port of the oldSustains Lua ----
+	// Three parts: this spawn hook (alpha, optional stretch), the note loop skipping
+	// clipToStrumNote (hold never cut at the strum) and the vanish point before the screen border.
+	/** multAlpha of every sustain piece (0.2.5 used 0.6). */
+	public static var oldSustainAlpha:Float = 0.6;
+	/** scale.y multiplier for hold BODY pieces (never the end cap). 1 = stock size (default).
+	 *  <= 0 = auto: exact 0.2.5 sizing. 0.2.5 sized pieces with a flat 2.25 * speed, Psych uses
+	 *  stepCrochet / 100 * 1.05 * speed, so the ratio is 2.25 / (stepCrochet / 100 * 1.05) = bpm / 70. */
+	public static var oldSustainStretch:Float = 1;
+
+	/** Where a hold vanishes, as a fraction of the way from the strum to the screen border
+	 *  (0 = right at the strum, 1 = at the border). Keep it below 1 so it disappears on screen. */
+	public static var oldSustainVanish:Float = 0.5;
+
+	function oldSustainSpawn(note:Note):Void
+	{
+		if (!note.isSustainNote)
+			return;
+
+		note.multAlpha = oldSustainAlpha;
+
+		var stretch:Float = oldSustainStretch > 0 ? oldSustainStretch : SONG.bpm / 70;
+		// only stretch the body pieces, not the end cap
+		if (stretch != 1 && note.animation.curAnim != null && !note.animation.curAnim.name.endsWith('end'))
+		{
+			note.scale.y *= stretch;
+			note.updateHitbox();
+		}
+	}
+
+	// ---- classic (0.2.5) opponent idle helpers ----
+	var lastOpponentSustainHit:Float = -100000;
+
+	/** True while the camera section is focused on the opponent. */
+	function isCameraOnOpponent():Bool
+	{
+		var sec = SONG.notes[curSection];
+		return sec != null && !sec.mustHitSection && !sec.gfSection;
+	}
+
+	/** True while the opponent is still holding a sustain (hit one within the last step). */
+	function opponentIsHolding():Bool
+	{
+		return Conductor.songPosition - lastOpponentSustainHit <= Conductor.stepCrochet;
+	}
+
 	function characterBopper(beat:Int)
 	{
 		if (gf != null
@@ -5330,10 +5392,16 @@ class PlayState extends MusicBeatState
 			&& !boyfriend.animation.curAnim.name.startsWith('sing')
 			&& !boyfriend.stunned)
 			boyfriend.dance();
+		// 0.2.5: the opponent only bops while the camera is NOT on them, and then it
+		// may cut off its own sing pose (unless it is still holding a note).
+		// Dad / Pico / Monster loop their idle anyway, so they skip the gate.
+		var dadGated:Bool = ClientPrefs.data.classicIdle && !dad.loopsIdle;
+		var dadSinging:Bool = dad.animation.curAnim != null && dad.animation.curAnim.name.startsWith('sing');
 		if (beat % dad.danceEveryNumBeats == 0
 			&& dad.animation.curAnim != null
-			&& !dad.animation.curAnim.name.startsWith('sing')
-			&& !dad.stunned)
+			&& !dad.stunned
+			&& (!dadGated || !isCameraOnOpponent())
+			&& (!dadSinging || (dadGated && !opponentIsHolding())))
 			dad.dance();
 	}
 
@@ -5356,6 +5424,16 @@ class PlayState extends MusicBeatState
 			if (generatedMusic && !endingSong && !isCameraOnForcedPos)
 			{
 				moveCameraSection();
+			}
+
+			// 0.2.5: the moment the camera goes to a must-hit section the opponent does its idle
+			// (cuts off a sing pose, restarts a frozen idle). Only a note it is still holding
+			// finishes first; the hold timer takes it to idle right after.
+			if (ClientPrefs.data.classicIdle && dad != null && dad.animation.curAnim != null
+				&& SONG.notes[curSection].mustHitSection && !SONG.notes[curSection].gfSection && !opponentIsHolding())
+			{
+				dad.dance();
+				dad.holdTimer = 0;
 			}
 
 			if (camZooming && FlxG.camera.zoom < 1.35 && ClientPrefs.data.camZooms)
