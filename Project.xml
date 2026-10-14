@@ -2,7 +2,7 @@
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="Friday Night Funkin': Sollaxx Engine Classic" file="PsychEngine" packageName="com.sollaxxscape.sollaxxengineclassic" package="com.sollaxxscape.sollaxxengineclassic" main="Main" version="0.2.5" company="SollaxxScape" />
+	<app title="Friday Night Funkin': Sollaxx Engine Classic" file="SollaxxEngineClassic" packageName="com.sollaxxscape.sollaxxengineclassic" package="com.sollaxxscape.sollaxxengineclassic" main="Main" version="0.2.5" company="SollaxxScape" />
 
 	<!-- NOTE TO SELF: DISABLE THIS IF ISSUES ARE FOUND -->
 	<haxedef name="LINC_LUA_RELATIVE_DYNAMIC_LIB"/> <!-- stable luas PUT AFTER FIRST LINE WITH APP NAME AND ETC -->
