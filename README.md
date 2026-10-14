@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="/assets/shared/images/Sollaxx Engine Logo.png" height=100></a>
+  <img src="/assets/shared/images/Sollaxx Engine Logo.png" height=350></a>
   <br>
   <b>Sollaxx Engine Classic</b>
   <br>
