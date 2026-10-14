@@ -2,7 +2,7 @@
   <br>
   <img src="/assets/shared/images/Sollaxx Engine Logo.png"></a>
   <br>
-  <b>Sollaxx Engine</b>
+  <b>Sollaxx Engine Classic</b>
   <br>
 </h1>
 <h3 align="center">
