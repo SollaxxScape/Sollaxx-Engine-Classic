@@ -16,7 +16,47 @@ If you wish to port your Psych Engine mod to Sollaxx Engine it's very easy to do
 Sollaxx Engine Classic & original are compatible with mods from Psych Engine. Tho some stuff like scripts/events may break. as this is still in experimental. We don't know if Psych 0.5.2h mods and older are compatible but you can try. Psych 0.6.3 mods work the best.
 
 
+everything added starting from 0.1.5
 
+## Gameplay look (We're aiming for FNF 0.2.5)
+- The gameplay HUD now matches the old looks
+  - Score text reads `Score: 150` in plain white, right-aligned under the health bar.
+  - The health bar uses the vanilla red/green colors.
+  - Rating and combo popups now appear in the game world instead of on the HUD.
+  - Combo numbers only show at 10 combo or more.
+- The time bar has been removed, along with its option.
+- Note splashes have been removed completely, including in the chart editor playtest.
+- The icon bop is rebuilt to match the old FNF.
+
+## Characters
+- **Classic Opponent Idle** (Gameplay Settings, default ON)
+  - The opponent only bops while the camera isn't on them.
+  - Dad, Pico and Monster loop their idle animation at all times.
+  - The opponent goes back to idle the moment the camera moves to a must-hit section. A hold they're still singing finishes first.
+
+## Notes
+- **CPU Strum Glow** (Gameplay Settings, default OFF)
+  - Turn it off and the opponent strums stay still when the CPU hits notes.
+- **Broken Hold Notes** (Visuals, default ON)
+  - Hold notes use the old look: see-through, not clipped at the strum, and drawn over it.
+  - They vanish before reaching the edge of the screen.
+
+## HUD options (Visuals)
+- **Old Sollaxx Engine Status Bar** (default OFF)
+  - Shows Score | Misses | Accuracy | Rank under the health bar.
+- **Sollaxx Engine Watermark** (default ON)
+  - Shows a short `SEC <version>` watermark when the status bar is off.
+  - With the status bar on, it shows the full `Song Difficulty - Sollaxx Engine Classic <version>`.
+  - The version number comes from the main menu.
+
+## Freeplay
+- Freeplay now plays the instrumental of the song you're on, fading in as you scroll, like the old game.
+- SPACE-to-listen has been removed.
+- The menu music comes back when you leave Freeplay.
+
+## Technical
+- Lua scripts that call `setTimeBarColors` keep working (it now does nothing).
+- `timeBarType` always reads as `'Disabled'` in Lua.
 
 ## Customization:
 
