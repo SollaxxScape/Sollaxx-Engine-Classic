@@ -16,8 +16,6 @@ If you wish to port your Psych Engine mod to Sollaxx Engine it's very easy to do
 Sollaxx Engine Classic & original are compatible with mods from Psych Engine. Tho some stuff like scripts/events may break. as this is still in experimental. We don't know if Psych 0.5.2h mods and older are compatible but you can try. Psych 0.6.3 mods work the best.
 
 
-everything added starting from 0.1.5
-
 ## Gameplay look (We're aiming for FNF 0.2.5)
 - The gameplay HUD now matches the old looks
   - Score text reads `Score: 150` in plain white, right-aligned under the health bar.
