@@ -38,12 +38,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool');
 		addOption(option);
 
-		var option:Option = new Option('Classic HUD',
-			'If checked, the gameplay HUD looks like FNF 0.2.5\n(plain score text, red/green health bar, no time bar).',
-			'classicHud',
-			'bool');
-		addOption(option);
-
 		var option:Option = new Option('Broken Hold Notes',
 			'If checked, hold notes use the old (0.2.5) look: see-through pieces that are\nnot clipped at the strum, draw over it and vanish before the screen border.',
 			'brokenHolds',
@@ -54,13 +48,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			'If checked, shows Score | Combo Breaks | Accuracy | Rank\nunder the health bar like Kade Engine.',
 			'kadeStatusBar',
 			'bool');
-		addOption(option);
-		
-		var option:Option = new Option('Time Bar:',
-			"What should the Time Bar display?",
-			'timeBarType',
-			'string',
-			['Time Left', 'Time Elapsed', 'Song Name', 'Disabled']);
 		addOption(option);
 
 		var option:Option = new Option('Flashing Lights',

@@ -199,7 +199,7 @@ class FunkinLua {
 		set('framerate', ClientPrefs.data.framerate);
 		set('ghostTapping', ClientPrefs.data.ghostTapping);
 		set('hideHud', ClientPrefs.data.hideHud);
-		set('timeBarType', ClientPrefs.data.timeBarType);
+		set('timeBarType', 'Disabled'); // time bar removed
 		set('scoreZoom', ClientPrefs.data.scoreZoom);
 		set('cameraZoomOnBeat', ClientPrefs.data.camZooms);
 		set('flashingLights', ClientPrefs.data.flashing);
@@ -2005,10 +2005,7 @@ class FunkinLua {
 			PlayState.instance.healthBar.updateBar();
 		});
 		Lua_helper.add_callback(lua, "setTimeBarColors", function(leftHex:String, rightHex:String) {
-			var left:FlxColor = CoolUtil.colorFromString(leftHex);
-			var right:FlxColor = CoolUtil.colorFromString(rightHex);
-			PlayState.instance.timeBar.createFilledBar(right, left);
-			PlayState.instance.timeBar.updateBar();
+			// the time bar was removed (0.2.5 has none); kept so old scripts don't error
 		});
 
 		Lua_helper.add_callback(lua, "setObjectCamera", function(obj:String, camera:String = '') {

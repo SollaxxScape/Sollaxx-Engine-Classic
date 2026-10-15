@@ -159,12 +159,6 @@ class PlayState extends MusicBeatState
 
 	public var healthBar:FlxBar;
 
-	var songPercent:Float = 0;
-
-	private var timeBarBG:AttachedSprite;
-
-	public var timeBar:FlxBar;
-
 	public var ratingsData:Array<Rating> = [];
 	public var sicks:Int = 0;
 	public var goods:Int = 0;
@@ -175,8 +169,6 @@ class PlayState extends MusicBeatState
 
 	public var endingSong:Bool = false;
 	public var startingSong:Bool = false;
-
-	private var updateTime:Bool = true;
 
 	public static var changedDifficulty:Bool = false;
 	public static var chartingMode:Bool = false;
@@ -250,7 +242,6 @@ class PlayState extends MusicBeatState
 	public var songMisses:Int = 0;
 	public var scoreTxt:FlxText;
 
-	var timeTxt:FlxText;
 	var scoreTxtTween:FlxTween;
 
 	// Stores HUD Elements in a Group
@@ -1019,52 +1010,8 @@ class PlayState extends MusicBeatState
 			strumLine.y = FlxG.height - 150;
 		strumLine.scrollFactor.set();
 
-		var showTime:Bool = (ClientPrefs.data.timeBarType != 'Disabled') && !ClientPrefs.data.classicHud;
-		timeTxt = new FlxText(STRUM_X + (FlxG.width / 2) - 248, 19, 400, "", 32);
-		timeTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		timeTxt.scrollFactor.set();
-		timeTxt.alpha = 0;
-		timeTxt.borderSize = 2;
-		timeTxt.visible = showTime;
-		if (ClientPrefs.data.downScroll)
-			timeTxt.y = FlxG.height - 44;
-
-		if (ClientPrefs.data.timeBarType == 'Song Name')
-		{
-			timeTxt.text = SONG.song;
-		}
-		updateTime = showTime;
-
-		timeBarBG = new AttachedSprite('timeBar');
-		timeBarBG.x = timeTxt.x;
-		timeBarBG.y = timeTxt.y + (timeTxt.height / 4);
-		timeBarBG.scrollFactor.set();
-		timeBarBG.alpha = 0;
-		timeBarBG.visible = showTime;
-		timeBarBG.color = FlxColor.BLACK;
-		timeBarBG.xAdd = -4;
-		timeBarBG.yAdd = -4;
-		uiGroup.add(timeBarBG);
-
-		timeBar = new FlxBar(timeBarBG.x + 4, timeBarBG.y + 4, LEFT_TO_RIGHT, Std.int(timeBarBG.width - 8), Std.int(timeBarBG.height - 8), this,
-			'songPercent', 0, 1);
-		timeBar.scrollFactor.set();
-		timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
-		timeBar.numDivisions = 800; // How much lag this causes?? Should i tone it down to idk, 400 or 200?
-		timeBar.alpha = 0;
-		timeBar.visible = showTime;
-		uiGroup.add(timeBar);
-		uiGroup.add(timeTxt);
-		timeBarBG.sprTracker = timeBar;
-
 		strumLineNotes = new FlxTypedGroup<StrumNote>();
 		noteGroup.add(strumLineNotes);
-
-		if (ClientPrefs.data.timeBarType == 'Song Name')
-		{
-			timeTxt.size = 24;
-			timeTxt.y += 3;
-		}
 
 		opponentStrums = new FlxTypedGroup<StrumNote>();
 		playerStrums = new FlxTypedGroup<StrumNote>();
@@ -1098,7 +1045,7 @@ class PlayState extends MusicBeatState
 		moveCameraSection();
 
 		healthBarBG = new AttachedSprite('healthBar');
-		healthBarBG.y = FlxG.height * (ClientPrefs.data.classicHud ? 0.9 : 0.89);
+		healthBarBG.y = FlxG.height * 0.9;
 		healthBarBG.screenCenter(X);
 		healthBarBG.scrollFactor.set();
 		healthBarBG.visible = !ClientPrefs.data.hideHud;
@@ -1106,7 +1053,7 @@ class PlayState extends MusicBeatState
 		healthBarBG.yAdd = -4;
 		uiGroup.add(healthBarBG);
 		if (ClientPrefs.data.downScroll)
-			healthBarBG.y = (ClientPrefs.data.classicHud ? 0.1 : 0.11) * FlxG.height;
+			healthBarBG.y = 0.1 * FlxG.height;
 
 		healthBar = new FlxBar(healthBarBG.x + 4, healthBarBG.y + 4, RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8), Std.int(healthBarBG.height - 8), this,
 			'health', 0, 2);
@@ -1125,6 +1072,7 @@ class PlayState extends MusicBeatState
 
 		iconP2 = new HealthIcon(dad.healthIcon, false);
 		iconP2.y = healthBar.y - 75;
+		iconY = [iconP1.y, iconP2.y];
 		iconP2.visible = !ClientPrefs.data.hideHud;
 		iconP2.alpha = ClientPrefs.data.healthBarAlpha;
 		uiGroup.add(iconP2);
@@ -1136,34 +1084,28 @@ class PlayState extends MusicBeatState
 			scoreTxt = new FlxText(FlxG.width / 2 - 235, healthBarBG.y + 50, 0, "", 20);
 			scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		}
-		else if (ClientPrefs.data.classicHud)
+		else
 		{
 			// 0.2.5: small right-aligned text tucked under the right end of the health bar
 			scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + 30, 0, "", 20);
 			scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT); // 0.2.5: plain text, no outline
 		}
-		else
-		{
-			scoreTxt = new FlxText(0, healthBarBG.y + 36, FlxG.width, "", 20);
-			scoreTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-			scoreTxt.borderSize = 1.25;
-		}
 		scoreTxt.scrollFactor.set();
 		scoreTxt.visible = !ClientPrefs.data.hideHud;
 		uiGroup.add(scoreTxt);
 
-		botplayTxt = new FlxText(400, timeBarBG.y + 55, FlxG.width - 800, "BOTPLAY", 32);
+		botplayTxt = new FlxText(400, 83, FlxG.width - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
 		botplayTxt.visible = cpuControlled;
 		uiGroup.add(botplayTxt);
 		if (ClientPrefs.data.downScroll)
-			botplayTxt.y = timeBarBG.y - 78;
+			botplayTxt.y = FlxG.height - 113;
 
 		uiGroup.cameras = [camHUD];
 		noteGroup.cameras = [camHUD];
-		comboGroup.cameras = [ClientPrefs.data.classicHud ? camGame : camHUD]; // 0.2.5 popups lived in the game world
+		comboGroup.cameras = [camGame]; // 0.2.5 popups lived in the game world
 
 		startingSong = true;
 
@@ -1515,11 +1457,7 @@ class PlayState extends MusicBeatState
 
 	public function reloadHealthBarColors()
 	{
-		if (ClientPrefs.data.classicHud)
-			healthBar.createFilledBar(0xFFFF0000, 0xFF66FF33); // vanilla red / green
-		else
-			healthBar.createFilledBar(FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]),
-				FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2]));
+		healthBar.createFilledBar(0xFFFF0000, 0xFF66FF33); // vanilla red / green
 
 		healthBar.updateBar();
 	}
@@ -2388,38 +2326,8 @@ class PlayState extends MusicBeatState
 			return;
 		}
 
-		if (ClientPrefs.data.classicHud)
-		{
-			// 0.2.5: score only, no misses / rating / accuracy, no zoom tween
-			scoreTxt.text = 'Score:' + songScore;
-			callOnLuas('onUpdateScore', [miss]);
-			return;
-		}
-
-		var str:String = ratingName;
-		if (ratingName != '?')
-		{
-			str = '${ratingName} (${Highscore.floorDecimal(ratingPercent * 100, 2)}%)' + (ratingFC != null && ratingFC != "" ? ' - ${ratingFC}' : '');
-		}
-
-		var tempScore:String = 'Score: ${songScore}' + (!instakillOnMiss ? ' | Misses: ${songMisses}' : "") + ' | Rating: ${str}';
-		scoreTxt.text = '${tempScore}\n';
-
-		if (ClientPrefs.data.scoreZoom && !miss && !cpuControlled)
-		{
-			if (scoreTxtTween != null)
-			{
-				scoreTxtTween.cancel();
-			}
-			scoreTxt.scale.x = 1.075;
-			scoreTxt.scale.y = 1.075;
-			scoreTxtTween = FlxTween.tween(scoreTxt.scale, {x: 1, y: 1}, 0.2, {
-				onComplete: function(twn:FlxTween)
-				{
-					scoreTxtTween = null;
-				}
-			});
-		}
+		// 0.2.5: score only, no misses / rating / accuracy, no zoom tween
+		scoreTxt.text = 'Score:' + songScore;
 		callOnLuas('onUpdateScore', [miss]);
 	}
 
@@ -2507,10 +2415,8 @@ class PlayState extends MusicBeatState
 			vocals.pause();
 		}
 
-		// Song duration in a float, useful for the time left feature
+		// Song duration in a float (Discord presence, Lua)
 		songLength = FlxG.sound.music.length;
-		FlxTween.tween(timeBar, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
-		FlxTween.tween(timeTxt, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
 
 		switch (curStage)
 		{
@@ -3054,6 +2960,21 @@ class PlayState extends MusicBeatState
 
 	override public function update(elapsed:Float)
 	{
+		// ---- SollIconScript2.lua, function onUpdate(), converted 1:1 ----
+		// doTweenX('iconP1Zoom-x', 'iconP1.scale', 1, 0.15, 'quintOut')
+		doIconTween('iconP1Zoom-x', iconP1.scale, {x: 1}, 0.15);
+		// doTweenY('iconP1Zoom-y', 'iconP1.scale', 15, 0.1, 'quintOut')
+		doIconTween('iconP1Zoom-y', iconP1.scale, {y: 15}, 0.1);
+		// doTweenX('iconP2Zoom-x', 'iconP2.scale', 1, 0.15, 'quintOut')
+		doIconTween('iconP2Zoom-x', iconP2.scale, {x: 1}, 0.15);
+		// doTweenY('iconP2Zoom-y', 'iconP2.scale', 15, 0.1, 'quintOut')
+		doIconTween('iconP2Zoom-y', iconP2.scale, {y: 15}, 0.1);
+
+		// doTweenY('iconP1Zoom-y', 'iconP1', iconY[1], 0.1, 'quintOut')   (same tag: replaces the scale.y tween above)
+		doIconTween('iconP1Zoom-y', iconP1, {y: iconY[0]}, 0.1);
+		// doTweenY('iconP2Zoom-y', 'iconP2', iconY[2], 0.1, 'quintOut')
+		doIconTween('iconP2Zoom-y', iconP2, {y: iconY[1]}, 0.1);
+
 		callOnLuas('onUpdate', [elapsed]);
 
 		switch (curStage)
@@ -3250,8 +3171,8 @@ class PlayState extends MusicBeatState
 		if (FlxG.keys.anyJustPressed(debugKeysChart) && !endingSong && !inCutscene)
 			openChartEditor();
 
-		// vanilla halved the icon's size offset every frame at 60fps; Psych eases much slower
-		var iconRatio:Float = ClientPrefs.data.classicHud ? Math.pow(0.5, elapsed * 60) : CoolUtil.boundTo(1 - (elapsed * 9 * playbackRate), 0, 1);
+		// vanilla halved the icon's size offset every frame at 60fps
+		var iconRatio:Float = Math.pow(0.5, elapsed * 60);
 
 		var mult:Float = FlxMath.lerp(1, iconP1.scale.x, iconRatio);
 		iconP1.scale.set(mult, mult);
@@ -3270,7 +3191,7 @@ class PlayState extends MusicBeatState
 		iconP2.x = healthBar.x
 			+ (healthBar.width * (FlxMath.remapToRange(healthBar.percent, 0, 100, 100, 0) * 0.01))
 			- (150 * iconP2.scale.x) / 2
-			- (ClientPrefs.data.classicHud ? iconOffset * 2 - 3 : iconOffset * 2); // -3: matches vanilla's (width - 26) offset
+			- (iconOffset * 2 - 3); // -3: matches vanilla's (width - 26) offset
 
 		if (health > 2)
 			health = 2;
@@ -3319,25 +3240,6 @@ class PlayState extends MusicBeatState
 					Conductor.lastSongPos = Conductor.songPosition;
 					// Conductor.songPosition += FlxG.elapsed * 1000;
 					// trace('MISSED FRAME');
-				}
-
-				if (updateTime)
-				{
-					var curTime:Float = Conductor.songPosition - ClientPrefs.data.noteOffset;
-					if (curTime < 0)
-						curTime = 0;
-					songPercent = (curTime / songLength);
-
-					var songCalc:Float = (songLength - curTime);
-					if (ClientPrefs.data.timeBarType == 'Time Elapsed')
-						songCalc = curTime;
-
-					var secondsTotal:Int = Math.floor(songCalc / 1000);
-					if (secondsTotal < 0)
-						secondsTotal = 0;
-
-					if (ClientPrefs.data.timeBarType != 'Song Name')
-						timeTxt.text = FlxStringUtil.formatTime(secondsTotal, false);
 				}
 			}
 
@@ -4177,7 +4079,6 @@ class PlayState extends MusicBeatState
 	{
 		var finishCallback:Void->Void = endSong; // In case you want to change it in a specific song.
 
-		updateTime = false;
 		FlxG.sound.music.volume = 0;
 		vocals.volume = 0;
 		vocals.pause();
@@ -4222,14 +4123,10 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		timeBarBG.visible = false;
-		timeBar.visible = false;
-		timeTxt.visible = false;
 		canPause = false;
 		endingSong = true;
 		camZooming = false;
 		inCutscene = false;
-		updateTime = false;
 
 		deathCounter = 0;
 		seenCutscene = false;
@@ -4400,11 +4297,11 @@ class PlayState extends MusicBeatState
 		vocals.volume = 1;
 
 		var placement:String = Std.string(combo);
-		var popupCam:FlxCamera = ClientPrefs.data.classicHud ? camGame : camHUD;
+		var popupCam:FlxCamera = camGame;
 
 		var coolText:FlxText = new FlxText(0, 0, 0, placement, 32);
 		coolText.screenCenter();
-		coolText.x = FlxG.width * (ClientPrefs.data.classicHud ? 0.55 : 0.35);
+		coolText.x = FlxG.width * 0.55;
 		//
 
 		var rating:FlxSprite = new FlxSprite();
@@ -4533,7 +4430,7 @@ class PlayState extends MusicBeatState
 			numScore.visible = !ClientPrefs.data.hideHud;
 
 			// if (combo >= 10 || combo == 0)
-			if (showComboNum && (!ClientPrefs.data.classicHud || combo >= 10 || combo == 0))
+			if (showComboNum && (combo >= 10 || combo == 0))
 				comboGroup.add(numScore);
 
 			FlxTween.tween(numScore, {alpha: 0}, 0.2 / playbackRate, {
@@ -5266,6 +5163,9 @@ class PlayState extends MusicBeatState
 		iconP1.updateHitbox();
 		iconP2.updateHitbox();
 
+		iconP1.y = iconY[0] - iconBopY; // kick the icons up, the script's Y tween brings them back
+		iconP2.y = iconY[1] - iconBopY;
+
 		characterBopper(curBeat);
 
 		switch (curStage)
@@ -5331,6 +5231,22 @@ class PlayState extends MusicBeatState
 
 		setOnLuas('curBeat', curBeat); // DAWGG?????
 		callOnLuas('onBeatHit', []);
+	}
+
+	// ---- icon bop: SollIconScript2.lua converted ----
+	/** Lua's iconY table: rest Y of iconP1 / iconP2 (index 0 / 1 here, 1 / 2 in Lua). */
+	var iconY:Array<Float> = [0, 0];
+	/** How many pixels the icons jump up on every beat (0 = no Y bop). The script itself has no kick. */
+	public static var iconBopY:Float = -15;
+	var iconTweens:Map<String, FlxTween> = new Map();
+
+	/** Same as Lua doTweenX / doTweenY with 'quintOut': a tween with an existing tag replaces the old one. */
+	function doIconTween(tag:String, target:Dynamic, values:Dynamic, time:Float):Void
+	{
+		var old:FlxTween = iconTweens.get(tag);
+		if (old != null)
+			old.cancel();
+		iconTweens.set(tag, FlxTween.tween(target, values, time, {ease: FlxEase.quintOut}));
 	}
 
 	// ---- Broken Hold Notes: old (0.2.5) sustain look, port of the oldSustains Lua ----
