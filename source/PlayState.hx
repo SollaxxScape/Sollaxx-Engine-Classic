@@ -1078,9 +1078,8 @@ class PlayState extends MusicBeatState
 		uiGroup.add(iconP2);
 		reloadHealthBarColors();
 
-		if (ClientPrefs.data.kadeStatusBar)
+		if (ClientPrefs.data.SollaxxEngineStatusBar)
 		{
-			// Kade Engine 1.4.x status bar
 			scoreTxt = new FlxText(FlxG.width / 2 - 235, healthBarBG.y + 50, 0, "", 20);
 			scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		}
@@ -1093,6 +1092,31 @@ class PlayState extends MusicBeatState
 		scoreTxt.scrollFactor.set();
 		scoreTxt.visible = !ClientPrefs.data.hideHud;
 		uiGroup.add(scoreTxt);
+
+		if (ClientPrefs.data.engineWatermark)
+		{
+			var watermarkStr:String;
+			if (ClientPrefs.data.SollaxxEngineStatusBar)
+			{
+				// status bar on: the full watermark (song, difficulty, engine, version)
+				var diffName:String = CoolUtil.difficultyString();
+				diffName = diffName.charAt(0).toUpperCase() + diffName.substr(1).toLowerCase();
+				// version comes from MainMenuState, the same one the main menu shows
+				var tag:String = ' - ' + (watermarkTag.length > 0 ? watermarkTag + ' ' : '') + MainMenuState.psychEngineVersion;
+				watermarkStr = SONG.song + ' ' + diffName + tag;
+			}
+			else
+			{
+				// status bar off: short watermark, "SEC <version>"
+				watermarkStr = watermarkShortTag + ' ' + MainMenuState.psychEngineVersion;
+			}
+
+			watermarkTxt = new FlxText(4, healthBarBG.y + 50, 0, watermarkStr, 16);
+			watermarkTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			watermarkTxt.scrollFactor.set();
+			watermarkTxt.visible = !ClientPrefs.data.hideHud;
+			uiGroup.add(watermarkTxt);
+		}
 
 		botplayTxt = new FlxText(400, 83, FlxG.width - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -2276,8 +2300,8 @@ class PlayState extends MusicBeatState
 		}
 	}
 
-	/** Kade Engine rank, e.g. "(FC) AAA:" */
-	function kadeRank():String
+	/** Sollaxx Engine rank, e.g. "(FC) AAA:" */
+	function SollaxxEngineRank():String
 	{
 		var acc:Float = ratingPercent * 100;
 		if (totalPlayed == 0 || acc <= 0)
@@ -2296,8 +2320,12 @@ class PlayState extends MusicBeatState
 			fc = '(Clear)';
 
 		var letters:Array<Array<Dynamic>> = [
-			[99.9935, 'AAAAA'], [99.980, 'AAAA:'], [99.970, 'AAAA.'], [99.955, 'AAAA'], [99.90, 'AAA:'], [99.80, 'AAA.'],
-			[99.70, 'AAA'], [99.0, 'AA:'], [96.50, 'AA.'], [93.0, 'AA'], [90.0, 'A:'], [85.0, 'A.'], [80.0, 'A'], [70.0, 'B'], [60.0, 'C']
+			[100, 'S+'],
+			[95, 'S'],
+			[90, 'A'],
+			[80, 'B'],
+			[70, 'C'],
+			[60, 'D']
 		];
 		var letter:String = 'D';
 		for (l in letters)
@@ -2311,17 +2339,17 @@ class PlayState extends MusicBeatState
 		return fc + ' ' + letter;
 	}
 
-	function kadeStatusText():String
+	function SollaxxEngineStatusText():String
 	{
-		var acc:Float = Math.round(ratingPercent * 100 * 100) / 100; // Kade's truncateFloat(accuracy, 2)
-		return 'Score:' + songScore + ' | Combo Breaks:' + songMisses + ' | Accuracy:' + acc + '% | ' + kadeRank();
+		var acc:Float = Math.round(ratingPercent * 100 * 100) / 100; // Sollaxx Engine's truncateFloat(accuracy, 2)
+		return 'Score:' + songScore + ' | Misses:' + songMisses + ' | Accuracy:' + acc + '% | ' + SollaxxEngineRank();
 	}
 
 	public dynamic function updateScore(miss:Bool = false)
 	{
-		if (ClientPrefs.data.kadeStatusBar)
+		if (ClientPrefs.data.SollaxxEngineStatusBar)
 		{
-			scoreTxt.text = kadeStatusText();
+			scoreTxt.text = SollaxxEngineStatusText();
 			callOnLuas('onUpdateScore', [miss]);
 			return;
 		}
@@ -2960,15 +2988,14 @@ class PlayState extends MusicBeatState
 
 	override public function update(elapsed:Float)
 	{
-		// ---- SollIconScript2.lua, function onUpdate(), converted 1:1 ----
 		// doTweenX('iconP1Zoom-x', 'iconP1.scale', 1, 0.15, 'quintOut')
 		doIconTween('iconP1Zoom-x', iconP1.scale, {x: 1}, 0.15);
 		// doTweenY('iconP1Zoom-y', 'iconP1.scale', 15, 0.1, 'quintOut')
-		doIconTween('iconP1Zoom-y', iconP1.scale, {y: 15}, 0.1);
+		doIconTween('iconP1Zoom-y', iconP1.scale, {y: -15}, 0.1);
 		// doTweenX('iconP2Zoom-x', 'iconP2.scale', 1, 0.15, 'quintOut')
 		doIconTween('iconP2Zoom-x', iconP2.scale, {x: 1}, 0.15);
 		// doTweenY('iconP2Zoom-y', 'iconP2.scale', 15, 0.1, 'quintOut')
-		doIconTween('iconP2Zoom-y', iconP2.scale, {y: 15}, 0.1);
+		doIconTween('iconP2Zoom-y', iconP2.scale, {y: -15}, 0.1);
 
 		// doTweenY('iconP1Zoom-y', 'iconP1', iconY[1], 0.1, 'quintOut')   (same tag: replaces the scale.y tween above)
 		doIconTween('iconP1Zoom-y', iconP1, {y: iconY[0]}, 0.1);
@@ -5232,6 +5259,12 @@ class PlayState extends MusicBeatState
 		setOnLuas('curBeat', curBeat); // DAWGG?????
 		callOnLuas('onBeatHit', []);
 	}
+
+	// ---- Sollaxx Engine watermark ----
+	var watermarkTxt:FlxText;
+	public static var watermarkTag:String = 'Sollaxx Engine Classic';
+	/** Short name for the watermark when the status bar is off. */
+	public static var watermarkShortTag:String = 'SEC';
 
 	// ---- icon bop: SollIconScript2.lua converted ----
 	/** Lua's iconY table: rest Y of iconP1 / iconP2 (index 0 / 1 here, 1 / 2 in Lua). */

@@ -34,7 +34,7 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 
 		//I'd suggest using "Downscroll" as an example for making your own option since it is the simplest here
 		var option:Option = new Option('Downscroll', //Name
-			'If checked, notes go Down instead of Up, simple enough.', //Description
+			'If checked, notes go Down instead of Up, simple enough. Also why do you need it? Enjoy CLASSIC FNF like a champ.', //Description
 			'downScroll', //Save data variable name
 			'bool'); //Variable type
 		addOption(option);
@@ -52,13 +52,13 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		addOption(option);
 
 		var option:Option = new Option('CPU Strum Glow',
-			'If unchecked, the opponent strums stay still when the CPU hits notes\n(like 0.2.5).',
+			'If checked, the CPU strums will glow when they are hit.',
 			'cpuStrumGlow',
 			'bool');
 		addOption(option);
 
 		var option:Option = new Option('Classic Opponent Idle',
-			'If checked, the opponent only bops while the camera is on you,\nand Dad / Pico / Monster loop their idle (like 0.2.5).',
+			'If checked, the opponent only bops while the camera is on you,\nand Dad / Pico / Monster loop their idle.',
 			'classicIdle',
 			'bool');
 		addOption(option);

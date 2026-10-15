@@ -15,7 +15,7 @@ class SaveVariables {
 	// -- GAMEPLAY OPTIONS -- //
 	public var downScroll:Bool = false;
 	public var middleScroll:Bool = false;
-	public var ghostTapping:Bool = true;
+	public var ghostTapping:Bool = false;
 	public var opponentStrums:Bool = true;
 	public var noReset:Bool = false;
 	public var noteOffset:Int = 0;
@@ -28,9 +28,10 @@ class SaveVariables {
 
 	// -- VISUAL OPTIONS -- //
 	public var hideHud:Bool = false;
-	public var cpuStrumGlow:Bool = true; // opponent strums light up when the CPU hits a note (0.2.5 never did)
+	public var cpuStrumGlow:Bool = false; // opponent strums light up when the CPU hits a note (0.2.5 never did)
 	public var brokenHolds:Bool = true; // old (0.2.5) hold note look: stretched see-through pieces, not clipped at the strum
-	public var kadeStatusBar:Bool = false; // Kade Engine score / combo breaks / accuracy / rank bar
+	public var engineWatermark:Bool = true; // "Song Difficulty - Engine vX" text under the health bar (Kade style)
+	public var SollaxxEngineStatusBar:Bool = false; // Old Sollaxx Engine score / combo breaks / accuracy / rank bar
 	public var classicIdle:Bool = true; // 0.2.5 opponent idle rules (camera gated, dad/pico loop)
 	public var arrowHSV:Array<Array<Int>> = [
 	  [0, 0, 0], // Left

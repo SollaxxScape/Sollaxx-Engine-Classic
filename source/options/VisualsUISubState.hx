@@ -39,14 +39,20 @@ class VisualsUISubState extends BaseOptionsMenu
 		addOption(option);
 
 		var option:Option = new Option('Broken Hold Notes',
-			'If checked, hold notes use the old (0.2.5) look: see-through pieces that are\nnot clipped at the strum, draw over it and vanish before the screen border.',
+			'If checked, hold notes will look like they did in 0.2.5, with stretched see-through pieces instead of being clipped at the strum.',
 			'brokenHolds',
 			'bool');
 		addOption(option);
 
-		var option:Option = new Option('Kade Status Bar',
-			'If checked, shows Score | Combo Breaks | Accuracy | Rank\nunder the health bar like Kade Engine.',
-			'kadeStatusBar',
+		var option:Option = new Option('Old Sollaxx Engine Status Bar',
+			'If checked, shows Score | Misses | Accuracy | Rank\nunder the health bar like in 2022 Sollaxx Engine.',
+			'SollaxxEngineStatusBar',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Sollaxx Engine Watermark',
+			'If checked, shows the song, difficulty and engine version at the\nbottom left of the screen.',
+			'engineWatermark',
 			'bool');
 		addOption(option);
 
