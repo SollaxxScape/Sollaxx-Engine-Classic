@@ -20,7 +20,7 @@ Sollaxx Engine Classic & original are compatible with mods from Psych Engine. Th
 - The gameplay HUD now matches the old looks
   - Score text reads `Score: 150` in plain white, right-aligned under the health bar.
   - The health bar uses the vanilla red/green colors.
-  - Rating and combo popups now appear in the game world instead of on the HUD.
+  - Rating and combo popups now appear near GF instead of on the HUD. (can be customized)
   - Combo numbers only show at 10 combo or more.
 - The time bar has been removed, along with its option.
 - Note splashes have been removed completely, including in the chart editor playtest.
@@ -41,16 +41,15 @@ Sollaxx Engine Classic & original are compatible with mods from Psych Engine. Th
 
 ## HUD options (Visuals)
 - **Old Sollaxx Engine Status Bar** (default OFF)
-  - Shows Score | Misses | Accuracy | Rank under the health bar.
+  - Shows Score | Misses | Accuracy | Rank under the health bar. fun fact this is how Sollaxx Engine 0.1.5 Alpha looked like back in 2022! ;)
 - **Sollaxx Engine Watermark** (default ON)
   - Shows a short `SEC <version>` watermark when the status bar is off.
   - With the status bar on, it shows the full `Song Difficulty - Sollaxx Engine Classic <version>`.
-  - The version number comes from the main menu.
 
 ## Freeplay
 - Freeplay now plays the instrumental of the song you're on, fading in as you scroll, like the old game.
 - SPACE-to-listen has been removed.
-- The menu music comes back when you leave Freeplay.
+- The menu music comes back when you leave Freeplay. (It wasn't like that but I kind of prefer it that way.)
 
 ## Technical
 - Lua scripts that call `setTimeBarColors` keep working (it now does nothing).
@@ -75,4 +74,5 @@ Join the discord server for the updates/announcements and support
 # Credits
 * SollaxxScape - Main Developer/Programmer
 * SollaxxScape - the funni old art style of every 2021 engines
+* ??????_?????? - ??? ???????? ??????? ?? ???? ??????
 _____________________________________
