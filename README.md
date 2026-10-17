@@ -42,7 +42,7 @@ Sollaxx Engine Classic & original are compatible with mods from Psych Engine. Th
 ## HUD options (Visuals)
 - **Old Sollaxx Engine Status Bar** (default OFF)
   - Shows Score | Misses | Accuracy | Rank under the health bar. fun fact this is how Sollaxx Engine 0.1.5 Alpha looked like back in 2022! ;)
-  **Sarv Engine HUD** (default OFF)
+- **Sarv Engine HUD** (default OFF)
   - Experience Sarv Engine again came from the Mid-fight Masses mod! (made by Kuroao_Anomal, Mike geno & Dokki.Doodlez) (MID-FIGHT MASSES MOD WILL NEVER BE INCLUDED DO IT YOURSELF.)
 - **Sollaxx Engine Watermark** (default ON)
   - Shows a short `SEC <version>` watermark when the status bar is off.
