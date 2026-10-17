@@ -20,6 +20,12 @@ import WeekData;
 #if MODS_ALLOWED
 import sys.FileSystem;
 #end
+#if (sys && MODS_ALLOWED && PRELOAD_ALL)
+import openfl.media.Sound;
+import openfl.system.System;
+import sys.thread.Deque;
+import sys.thread.Thread;
+#end
 
 using StringTools;
 
@@ -162,6 +168,10 @@ class FreeplayState extends MusicBeatState
 		changeSelection();
 		changeDiff();
 
+		#if (sys && MODS_ALLOWED && PRELOAD_ALL)
+		startPreload();
+		#end
+
 		var swag:Alphabet = new Alphabet(1, 0, "swag");
 
 		// JUST DOIN THIS SHIT FOR TESTING!!!
@@ -182,7 +192,7 @@ class FreeplayState extends MusicBeatState
 		 */
 
 		var textBG:FlxSprite = new FlxSprite(0, FlxG.height - 26).makeGraphic(FlxG.width, 26, 0xFF000000);
-		textBG.alpha = 0.6;
+		textBG.alpha = 0;
 		add(textBG);
 
 		#if PRELOAD_ALL
@@ -236,9 +246,50 @@ class FreeplayState extends MusicBeatState
 	var holdTime:Float = 0;
 	override function update(elapsed:Float)
 	{
+		#if (sys && MODS_ALLOWED && PRELOAD_ALL)
+		pollPreload();
+		#end
+
 		if (FlxG.sound.music.volume < 0.7)
 		{
 			FlxG.sound.music.volume += 0.5 * FlxG.elapsed;
+		}
+
+		// Sarv Engine HUD only: the background beats to the BPM of the song that is playing
+		var zavodila:Bool = false;
+		if (ClientPrefs.data.sarvEngineHud)
+		{
+			if (bgBpm > 0 && FlxG.sound.music != null && FlxG.sound.music.playing)
+			{
+				var beat:Int = Math.floor(FlxG.sound.music.time / (60000 / bgBpm));
+				if (beat != bgLastBeat)
+				{
+					bgLastBeat = beat;
+					bgPulse = 1;
+				}
+			}
+			bgPulse = FlxMath.lerp(0, bgPulse, CoolUtil.boundTo(1 - (elapsed * 9), 0, 1));
+
+			zavodila = bgBpm > 0 && isZavodila();
+			var beatScale:Float = 1 + (zavodila ? zavodilaBeatScale : bgBeatScale) * bgPulse;
+			bg.scale.set(beatScale, beatScale);
+			// Zavodila: the background shakes on every beat too
+			bg.offset.set(zavodila ? FlxG.random.float(-1, 1) * zavodilaBgShake * bgPulse : 0, zavodila ? FlxG.random.float(-1, 1) * zavodilaBgShake * bgPulse : 0);
+		}
+
+		// take last frame's text shake off before the menu items lerp toward their positions
+		if (textShakeX != 0 || textShakeY != 0)
+		{
+			for (item in grpSongs.members)
+			{
+				if (item != null)
+				{
+					item.x -= textShakeX;
+					item.y -= textShakeY;
+				}
+			}
+			textShakeX = 0;
+			textShakeY = 0;
 		}
 
 		lerpScore = Math.floor(FlxMath.lerp(lerpScore, intendedScore, CoolUtil.boundTo(elapsed * 24, 0, 1)));
@@ -258,7 +309,7 @@ class FreeplayState extends MusicBeatState
 			ratingSplit[1] += '0';
 		}
 
-		scoreText.text = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit.join('.') + '%)';
+		scoreText.text = 'PERSONAL BEST: ' + lerpScore;
 		positionHighscore();
 
 		var upP = controls.UI_UP_P;
@@ -359,6 +410,10 @@ class FreeplayState extends MusicBeatState
 			FlxG.sound.music.volume = 0;
 					
 			destroyFreeplayVocals();
+
+			#if (sys && MODS_ALLOWED && PRELOAD_ALL)
+			keepOnLeave = instLocation(songs[curSelected]).cacheKey; // the song is about to use it
+			#end
 		}
 		else if(controls.RESET)
 		{
@@ -367,6 +422,206 @@ class FreeplayState extends MusicBeatState
 			FlxG.sound.play(Paths.sound('scrollMenu'));
 		}
 		super.update(elapsed);
+
+		// Zavodila: the song text shakes a little on every beat
+		if (zavodila && bgPulse > 0.01)
+		{
+			textShakeX = FlxG.random.float(-1, 1) * zavodilaTextShake * bgPulse;
+			textShakeY = FlxG.random.float(-1, 1) * zavodilaTextShake * bgPulse;
+			for (item in grpSongs.members)
+			{
+				if (item != null)
+				{
+					item.x += textShakeX;
+					item.y += textShakeY;
+				}
+			}
+
+			// the icons shake too. They snap back to their song text in their own update every frame,
+			// so there is nothing to undo here.
+			var iconShakeX:Float = FlxG.random.float(-1, 1) * zavodilaIconShake * bgPulse;
+			var iconShakeY:Float = FlxG.random.float(-1, 1) * zavodilaIconShake * bgPulse;
+			for (icon in iconArray)
+			{
+				if (icon != null)
+				{
+					icon.x += iconShakeX;
+					icon.y += iconShakeY;
+				}
+			}
+		}
+	}
+
+	// ---- background beat (follows the BPM of the song being played) ----
+	/** Background size added on a beat (1 = +100%). */
+	public static var bgBeatScale:Float = 0.04;
+	/** Zavodila: bigger beat, background shake and text shake. */
+	public static var zavodilaBeatScale:Float = 0.12;
+	public static var zavodilaBgShake:Float = 14; // pixels
+	public static var zavodilaTextShake:Float = 4; // pixels
+	public static var zavodilaIconShake:Float = 6; // pixels
+
+	var bgBpm:Float = 0;
+	var bgLastBeat:Int = -1;
+	var bgPulse:Float = 0; // 1 on a beat, eases back to 0
+	var bgBpmCache:Map<String, Float> = new Map();
+	var textShakeX:Float = 0;
+	var textShakeY:Float = 0;
+
+	function isZavodila():Bool
+	{
+		return Paths.formatToSongPath(songs[curSelected].songName) == 'zavodila';
+	}
+
+	/** BPM from the song's chart (cached). 0 when the chart can't be read. */
+	function songBpm(song:SongMetadata):Float
+	{
+		var oldDir:String = Paths.currentModDirectory;
+		Paths.currentModDirectory = song.folder;
+
+		var lower:String = Paths.formatToSongPath(song.songName);
+		var key:String = song.folder + '/' + lower;
+		if (!bgBpmCache.exists(key))
+		{
+			var bpm:Float = 0;
+			for (chartName in [Highscore.formatSong(lower, curDifficulty), lower])
+			{
+				try
+				{
+					bpm = Song.loadFromJson(chartName, lower).bpm;
+				}
+				catch (e:Dynamic) {}
+				if (bpm > 0)
+					break;
+			}
+			bgBpmCache.set(key, bpm);
+		}
+
+		Paths.currentModDirectory = oldDir;
+		return bgBpmCache.get(key);
+	}
+
+	// ---- preload every song's instrumental while Freeplay is open, unload when leaving ----
+	#if (sys && MODS_ALLOWED && PRELOAD_ALL)
+	var preloadQueue:Deque<{key:String, sound:Sound}> = new Deque();
+	var preloadStop:Bool = false;
+	/** Cache key of the inst that must survive leaving Freeplay (the song being played). */
+	var keepOnLeave:String = null;
+
+	/** Where Paths.returnSound loads a song's Inst from, and the key it caches it under. */
+	function instLocation(song:SongMetadata):{file:String, cacheKey:String}
+	{
+		Paths.currentModDirectory = song.folder;
+		var key:String = Paths.formatToSongPath(song.songName) + '/Inst';
+		var modFile:String = Paths.modsSounds('songs', key);
+		if (FileSystem.exists(modFile))
+			return {file: modFile, cacheKey: modFile};
+
+		var gotten:String = Paths.getPath('songs/' + key + '.' + Paths.SOUND_EXT, SOUND, null);
+		gotten = gotten.substring(gotten.indexOf(':') + 1, gotten.length);
+		return {file: './' + gotten, cacheKey: gotten};
+	}
+
+	/** Decodes every inst on a background thread (nearest to the selection first). */
+	function startPreload():Void
+	{
+		var oldDir:String = Paths.currentModDirectory;
+		var order:Array<Int> = [for (i in 0...songs.length) i];
+		order.sort(function(a:Int, b:Int) return Std.int(Math.abs(a - curSelected)) - Std.int(Math.abs(b - curSelected)));
+
+		var jobs:Array<{file:String, key:String}> = [];
+		var queued:Map<String, Bool> = new Map();
+		for (i in order)
+		{
+			var loc = instLocation(songs[i]);
+			if (queued.exists(loc.cacheKey) || Paths.currentTrackedSounds.exists(loc.cacheKey) || !FileSystem.exists(loc.file))
+				continue;
+			queued.set(loc.cacheKey, true);
+			jobs.push({file: loc.file, key: loc.cacheKey});
+		}
+		Paths.currentModDirectory = oldDir;
+
+		if (jobs.length == 0)
+			return;
+
+		preloadStop = false;
+		Thread.create(function()
+		{
+			for (job in jobs)
+			{
+				if (preloadStop)
+					break;
+				var snd:Sound = null;
+				try
+				{
+					snd = Sound.fromFile(job.file);
+				}
+				catch (e:Dynamic) {}
+				if (snd != null && !preloadStop)
+					preloadQueue.add({key: job.key, sound: snd});
+			}
+		});
+	}
+
+	/** Moves finished songs into the cache (on the main thread, the cache is not thread safe). */
+	function pollPreload():Void
+	{
+		var item = preloadQueue.pop(false);
+		while (item != null)
+		{
+			if (!Paths.currentTrackedSounds.exists(item.key))
+				Paths.currentTrackedSounds.set(item.key, item.sound);
+			else
+				closeSound(item.sound);
+			item = preloadQueue.pop(false);
+		}
+	}
+
+	function closeSound(snd:Sound):Void
+	{
+		try
+		{
+			snd.close();
+		}
+		catch (e:Dynamic) {}
+	}
+
+	/** Stops the loader and frees every song inst, except the one being taken into the song. */
+	function unloadInsts():Void
+	{
+		preloadStop = true;
+
+		var item = preloadQueue.pop(false);
+		while (item != null)
+		{
+			closeSound(item.sound);
+			item = preloadQueue.pop(false);
+		}
+
+		var oldDir:String = Paths.currentModDirectory;
+		for (song in songs)
+		{
+			var loc = instLocation(song);
+			if (loc.cacheKey == keepOnLeave)
+				continue;
+			var snd:Sound = Paths.currentTrackedSounds.get(loc.cacheKey);
+			if (snd != null)
+			{
+				Paths.currentTrackedSounds.remove(loc.cacheKey);
+				closeSound(snd);
+			}
+		}
+		Paths.currentModDirectory = oldDir;
+		System.gc();
+	}
+	#end
+
+	override function destroy()
+	{
+		#if (sys && MODS_ALLOWED && PRELOAD_ALL)
+		unloadInsts();
+		#end
+		super.destroy();
 	}
 
 	public static function destroyFreeplayVocals() {
@@ -394,7 +649,7 @@ class FreeplayState extends MusicBeatState
 		#end
 
 		PlayState.storyDifficulty = curDifficulty;
-		diffText.text = '< ' + CoolUtil.difficultyString() + ' >';
+		diffText.text = CoolUtil.difficultyString();
 		positionHighscore();
 	}
 
@@ -466,6 +721,8 @@ class FreeplayState extends MusicBeatState
 			{
 				FlxG.sound.playMusic(inst, 0);
 				instPlaying = curSelected;
+				bgBpm = ClientPrefs.data.sarvEngineHud ? songBpm(songs[curSelected]) : 0;
+				bgLastBeat = -1;
 			}
 		}
 		#end

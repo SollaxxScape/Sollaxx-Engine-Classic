@@ -30,8 +30,9 @@ class SaveVariables {
 	public var hideHud:Bool = false;
 	public var cpuStrumGlow:Bool = false; // opponent strums light up when the CPU hits a note (0.2.5 never did)
 	public var brokenHolds:Bool = true; // old (0.2.5) hold note look: stretched see-through pieces, not clipped at the strum
+	public var sarvEngineHud:Bool = false; // Sarv Engine HUD (Sarvente's Mid-Fight Masses)
 	public var engineWatermark:Bool = true; // "Song Difficulty - Engine vX" text under the health bar (Kade style)
-	public var SollaxxEngineStatusBar:Bool = false; // Old Sollaxx Engine score / combo breaks / accuracy / rank bar
+	public var SollaxxEngineStatusBar:Bool = false; // Kade Engine score / combo breaks / accuracy / rank bar
 	public var classicIdle:Bool = true; // 0.2.5 opponent idle rules (camera gated, dad/pico loop)
 	public var arrowHSV:Array<Array<Int>> = [
 	  [0, 0, 0], // Left

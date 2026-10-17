@@ -18,6 +18,8 @@ class CustomFadeTransition extends MusicBeatSubstate {
 	public static var finishCallback:Void->Void;
 	private var leTween:FlxTween = null;
 	public static var nextCamera:FlxCamera;
+	/** Width / height of the fade while the Sarv Engine HUD is on (4:3, centered). */
+	public static var sarvFadeAspect:Float = 4 / 3;
 	var isTransIn:Bool = false;
 	var transBlack:FlxSprite;
 	var transGradient:FlxSprite;
@@ -29,6 +31,14 @@ class CustomFadeTransition extends MusicBeatSubstate {
 		var zoom:Float = CoolUtil.boundTo(FlxG.camera.zoom, 0.05, 1);
 		var width:Int = Std.int(FlxG.width / zoom);
 		var height:Int = Std.int(FlxG.height / zoom);
+		// Sarv Engine HUD: the fade is 4:3 (the code below centers it). In a song it is drawn on camOther, not on
+		// the game camera whose zoom was used above, so size it from the camera it is really drawn on.
+		if (ClientPrefs.data.sarvEngineHud)
+		{
+			var drawCam:FlxCamera = nextCamera != null ? nextCamera : FlxG.camera;
+			height = Std.int(FlxG.height / CoolUtil.boundTo(drawCam.zoom, 0.05, 1));
+			width = Std.int(height * sarvFadeAspect);
+		}
 		transGradient = FlxGradient.createGradientFlxSprite(width, height, (isTransIn ? [0x0, FlxColor.BLACK] : [FlxColor.BLACK, 0x0]));
 		transGradient.scrollFactor.set();
 		add(transGradient);

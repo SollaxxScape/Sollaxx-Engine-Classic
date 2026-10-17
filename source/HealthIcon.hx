@@ -29,9 +29,21 @@ class HealthIcon extends FlxSprite
 			setPosition(sprTracker.x + sprTracker.width + 12, sprTracker.y - 30);
 	}
 
+	private var iconBeforeSwap:String = 'bf';
+
+	/** Swaps to the bf-old icon and back (the number 9 key). Swapping back restores the icon it had before. */
 	public function swapOldIcon() {
-		if(isOldIcon = !isOldIcon) changeIcon('bf-old');
-		else changeIcon('bf');
+		if (!isOldIcon)
+		{
+			iconBeforeSwap = (char == '' || char == 'bf-old') ? 'bf' : char;
+			changeIcon('bf-old');
+			isOldIcon = true;
+		}
+		else
+		{
+			changeIcon(iconBeforeSwap);
+			isOldIcon = false;
+		}
 	}
 
 	private var iconOffsets:Array<Float> = [0, 0];

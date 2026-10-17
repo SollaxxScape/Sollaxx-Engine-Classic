@@ -56,6 +56,12 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool');
 		addOption(option);
 
+		var option:Option = new Option('Sarv Engine HUD',
+			'If checked, the gameplay HUD uses the Sarv Engine style\n(Sarvente\'s Mid-Fight Masses).',
+			'sarvEngineHud',
+			'bool');
+		addOption(option);
+
 		var option:Option = new Option('Flashing Lights',
 			"Uncheck this if you're sensitive to flashing lights!",
 			'flashing',

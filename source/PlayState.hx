@@ -1118,7 +1118,10 @@ class PlayState extends MusicBeatState
 			uiGroup.add(watermarkTxt);
 		}
 
-		botplayTxt = new FlxText(400, 83, FlxG.width - 800, "BOTPLAY", 32);
+		if (ClientPrefs.data.sarvEngineHud)
+			applySarvHud();
+
+		botplayTxt = new FlxText(358, 83, FlxG.width - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
@@ -2794,6 +2797,8 @@ class PlayState extends MusicBeatState
 
 			var babyArrow:StrumNote = new StrumNote(ClientPrefs.data.middleScroll ? STRUM_X_MIDDLESCROLL : STRUM_X, strumLine.y, i, player);
 			babyArrow.downScroll = ClientPrefs.data.downScroll;
+			if (ClientPrefs.data.sarvEngineHud && ClientPrefs.data.downScroll)
+				babyArrow.y -= 20; // Sarv Engine HUD
 			if (!isStoryMode && !skipArrowStartTween)
 			{
 				
@@ -2997,10 +3002,34 @@ class PlayState extends MusicBeatState
 		// doTweenY('iconP2Zoom-y', 'iconP2.scale', 15, 0.1, 'quintOut')
 		doIconTween('iconP2Zoom-y', iconP2.scale, {y: -15}, 0.1);
 
-		// doTweenY('iconP1Zoom-y', 'iconP1', iconY[1], 0.1, 'quintOut')   (same tag: replaces the scale.y tween above)
-		doIconTween('iconP1Zoom-y', iconP1, {y: iconY[0]}, 0.1);
-		// doTweenY('iconP2Zoom-y', 'iconP2', iconY[2], 0.1, 'quintOut')
-		doIconTween('iconP2Zoom-y', iconP2, {y: iconY[1]}, 0.1);
+		if (ClientPrefs.data.sarvEngineHud)
+		{
+			// Sarv Engine HUD: the Y bop comes back per frame (not per second), like the size, so it also depends
+			// on the frame rate. Same as the Lua's cancel: drop the scale.y tweens that share the Y tags.
+			for (tag in ['iconP1Zoom-y', 'iconP2Zoom-y'])
+			{
+				var scaleYTween:FlxTween = iconTweens.get(tag);
+				if (scaleYTween != null)
+					scaleYTween.cancel();
+			}
+			// 0.402 = (1 - (1/60) / 0.1)^5, what the 0.1s quintOut tween keeps of the offset each frame at 60 fps
+			iconP1.y = FlxMath.lerp(iconY[0], iconP1.y, 0.402);
+			iconP2.y = FlxMath.lerp(iconY[1], iconP2.y, 0.402);
+		}
+		else
+		{
+			// doTweenY('iconP1Zoom-y', 'iconP1', iconY[1], 0.1, 'quintOut')   (same tag: replaces the scale.y tween above)
+			doIconTween('iconP1Zoom-y', iconP1, {y: iconY[0]}, 0.1);
+			// doTweenY('iconP2Zoom-y', 'iconP2', iconY[2], 0.1, 'quintOut')
+			doIconTween('iconP2Zoom-y', iconP2, {y: iconY[1]}, 0.1);
+		}
+
+		if (ClientPrefs.data.sarvEngineHud)
+			updateSarvHud();
+
+		// number 9: player icon <-> bf-old
+		if (FlxG.keys.justPressed.NINE)
+			iconP1.swapOldIcon();
 
 		callOnLuas('onUpdate', [elapsed]);
 
@@ -3199,7 +3228,8 @@ class PlayState extends MusicBeatState
 			openChartEditor();
 
 		// vanilla halved the icon's size offset every frame at 60fps
-		var iconRatio:Float = Math.pow(0.5, elapsed * 60);
+		// Sarv Engine HUD: decays per frame (not per second), so the bop settles faster at 144 fps than at 60 fps
+		var iconRatio:Float = ClientPrefs.data.sarvEngineHud ? 0.5 : Math.pow(0.5, elapsed * 60);
 
 		var mult:Float = FlxMath.lerp(1, iconP1.scale.x, iconRatio);
 		iconP1.scale.set(mult, mult);
@@ -3275,8 +3305,10 @@ class PlayState extends MusicBeatState
 
 		if (camZooming)
 		{
-			FlxG.camera.zoom = FlxMath.lerp(defaultCamZoom, FlxG.camera.zoom, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
-			camHUD.zoom = FlxMath.lerp(1, camHUD.zoom, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
+			// Sarv Engine HUD: 0.95 per frame like the old engines, so the camera / HUD bop depends on the frame rate
+			var zoomRatio:Float = ClientPrefs.data.sarvEngineHud ? Math.pow(0.95, camZoomingDecay) : CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1);
+			FlxG.camera.zoom = FlxMath.lerp(defaultCamZoom, FlxG.camera.zoom, zoomRatio);
+			camHUD.zoom = FlxMath.lerp(1, camHUD.zoom, zoomRatio);
 		}
 
 		FlxG.watch.addQuick("secShit", curSection);
@@ -4818,6 +4850,13 @@ class PlayState extends MusicBeatState
 
 		if (ClientPrefs.data.cpuStrumGlow)
 			StrumPlayAnim(true, Std.int(Math.abs(note.noteData)), time);
+		// Sarv Engine HUD: the CPU strums never light up
+		if (ClientPrefs.data.sarvEngineHud)
+		{
+			var sarvStrum:StrumNote = opponentStrums.members[Std.int(Math.abs(note.noteData))];
+			if (sarvStrum != null)
+				sarvStrum.playAnim('static', true);
+		}
 		note.hitByOpponent = true;
 
 		if (!note.isSustainNote)
@@ -5260,6 +5299,194 @@ class PlayState extends MusicBeatState
 		callOnLuas('onBeatHit', []);
 	}
 
+	// ---- Sarv Engine HUD (option "Sarv Engine HUD", default OFF): SarvEngineGUI.lua converted ----
+	/** Lua: enableAcc. Shows the ACCURACY box. */
+	public static var sarvEnableAcc:Bool = true;
+	/** Lua: enableTime. Shows the time left box at the top (bottom in downscroll). */
+	public static var sarvEnableTime:Bool = false;
+
+	var sarvRating:String = 'Unrated'; // Lua: ratingSarv
+	var sarvBoxInfo:FlxSprite;
+	var sarvAccInfo:FlxSprite;
+	var sarvTimeInfo:FlxSprite;
+	var sarvDC:FlxText;
+	var sarvMC:FlxText;
+	var sarvRC:FlxText;
+	var sarvSC:FlxText;
+	var sarvAC:FlxText;
+	var sarvTM:FlxText;
+
+	/** Lua createQuickBox(tag, x, y, width, height, 'ffffff', 0.3, true, dsy): white box at 30% alpha, tinted later. */
+	function sarvQuickBox(x:Float, y:Float, width:Int, height:Int, dsy:Float):FlxSprite
+	{
+		var box:FlxSprite = new FlxSprite(x, ClientPrefs.data.downScroll ? dsy : y);
+		box.makeGraphic(width, height, FlxColor.WHITE);
+		box.alpha = 0.3;
+		box.scrollFactor.set();
+		box.visible = !ClientPrefs.data.hideHud;
+		return box;
+	}
+
+	/** Lua createTextQuick(...): vcr 16, white, no outline (border size 0 / transparent). */
+	function sarvQuickText(text:String, x:Float, y:Float, ?alignment:FlxTextAlign = LEFT):FlxText
+	{
+		var txt:FlxText = new FlxText(x, y, 0, text, 16);
+		txt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, alignment);
+		txt.scrollFactor.set();
+		txt.visible = !ClientPrefs.data.hideHud;
+		return txt;
+	}
+
+	/** Lua setObjectOrder(..., getObjectOrder('iconP1') - 1): boxes and their texts sit behind the icons. */
+	function sarvAddBehindIcons(box:FlxSprite, texts:Array<FlxText>):Void
+	{
+		uiGroup.insert(uiGroup.members.indexOf(iconP1), box);
+		for (txt in texts)
+			uiGroup.insert(uiGroup.members.indexOf(iconP1), txt);
+	}
+
+	function applySarvHud():Void
+	{
+		var downscroll:Bool = ClientPrefs.data.downScroll;
+
+		// onCreate: info box (deaths, misses, rating, score)
+		sarvBoxInfo = sarvQuickBox(339, 674, 601, 30, 16);
+		sarvDC = sarvQuickText('DEATHS: ' + deathCounter, sarvBoxInfo.x + 21, sarvBoxInfo.y + 4);
+		sarvMC = sarvQuickText('MISSED: ' + songMisses, sarvBoxInfo.x + 121, sarvBoxInfo.y + 4);
+		sarvRC = sarvQuickText('RATING: ' + sarvRating, sarvBoxInfo.x + 252, sarvBoxInfo.y + 4);
+		sarvSC = sarvQuickText('SCORE:' + songScore, sarvBoxInfo.x + 477, sarvBoxInfo.y + 4);
+		sarvAddBehindIcons(sarvBoxInfo, [sarvDC, sarvMC, sarvRC, sarvSC]);
+
+		if (sarvEnableAcc)
+		{
+			sarvAccInfo = sarvQuickBox(86, 674, 171, 30, 16);
+			sarvAC = sarvQuickText('ACCURACY: ' + sarvRound(ratingPercent * 100, 2) + '%', sarvAccInfo.x + 4, sarvBoxInfo.y + 4);
+			sarvAddBehindIcons(sarvAccInfo, [sarvAC]);
+		}
+
+		if (sarvEnableTime)
+		{
+			sarvTimeInfo = sarvQuickBox((FlxG.width / 2) - (170 / 2), 16, 170, 30, 674);
+			sarvTM = sarvQuickText(sarvMilliToHuman(Math.floor(songLength - (Conductor.songPosition - ClientPrefs.data.noteOffset))),
+				sarvTimeInfo.x, sarvTimeInfo.y + 4, CENTER);
+			sarvAddBehindIcons(sarvTimeInfo, [sarvTM]);
+		}
+
+		// onCreatePost: hide the score text (the time bar is already gone) and move the bar and icons
+		scoreTxt.alpha = 0;
+		if (downscroll)
+		{
+			healthBar.y += 21;
+			iconP1.y += 31;
+			iconP2.y += 31;
+		}
+		else
+		{
+			healthBar.y -= 21;
+			iconP1.y -= 21;
+			iconP2.y -= 21;
+		}
+		// the icon bop tweens pull the icons back to iconY every frame, so it has to follow
+		iconY = [iconP1.y, iconP2.y];
+		// (the strums move 20px up in downscroll: see generateStaticArrows)
+	}
+
+	/** Lua onUpdate */
+	function updateSarvHud():Void
+	{
+		if (sarvBoxInfo == null)
+			return;
+
+		if (sarvEnableTime && sarvTimeInfo != null)
+			sarvTM.x = sarvTimeInfo.x + ((sarvTimeInfo.width / 2) - (sarvTM.width / 2));
+
+		var rating:Float = ratingPercent;
+		if (songMisses == 0 && songHits > 0)
+		{
+			sarvRating = 'PERFECT COMBO';
+			sarvColorBox(0xFFA8A800);
+		}
+		else if (songMisses > 0)
+		{
+			if (songHits == 0)
+				sarvRating = 'D';
+			else
+			{
+				if (rating >= 0.9)
+				{
+					sarvRating = 'S';
+					sarvColorBox(0xFF0C889F);
+				}
+				else if (rating >= 0.72)
+				{
+					sarvRating = 'A';
+					sarvColorBox(0xFFAF0000);
+				}
+				else if (rating >= 0.54)
+				{
+					sarvRating = 'B';
+					sarvColorBox(0xFF000000);
+				}
+				else if (rating >= 0.36)
+				{
+					sarvRating = 'C';
+					sarvColorBox(0xFF000000);
+				}
+				else if (rating >= 0.18)
+				{
+					sarvRating = 'D';
+					sarvColorBox(0xFF000000);
+				}
+			}
+		}
+		else
+			sarvColorBox(0xFF000000);
+
+		sarvSetText(sarvDC, 'DEATHS: ' + deathCounter);
+		sarvSetText(sarvMC, 'MISSED: ' + songMisses);
+		sarvSetText(sarvRC, 'RATING: ' + sarvRating);
+		sarvSetText(sarvSC, 'SCORE:' + songScore);
+		if (sarvEnableAcc)
+			sarvSetText(sarvAC, 'ACCURACY: ' + sarvRound(ratingPercent * 100, 2) + '%');
+		if (sarvEnableTime)
+			sarvSetText(sarvTM, sarvMilliToHuman(Math.floor(songLength - (Conductor.songPosition - ClientPrefs.data.noteOffset))));
+	}
+
+	/** Lua colorBox */
+	function sarvColorBox(color:FlxColor):Void
+	{
+		sarvBoxInfo.color = color;
+		if (sarvEnableAcc)
+			sarvAccInfo.color = color;
+		if (sarvEnableTime)
+			sarvTimeInfo.color = color;
+	}
+
+	/** Only touches the text when it changed, so it is not regenerated every frame. */
+	function sarvSetText(txt:FlxText, value:String):Void
+	{
+		if (txt != null && txt.text != value)
+			txt.text = value;
+	}
+
+	/** Lua milliToHuman: "%2d:%02d" */
+	function sarvMilliToHuman(milliseconds:Float):String
+	{
+		var totalSeconds:Int = Math.floor(milliseconds / 1000);
+		var seconds:Int = totalSeconds % 60;
+		var minutes:Int = Math.floor(totalSeconds / 60) % 60;
+		return StringTools.lpad(Std.string(minutes), ' ', 2) + ':' + StringTools.lpad(Std.string(seconds), '0', 2);
+	}
+
+	/** Lua round(x, n): half away from zero */
+	function sarvRound(x:Float, n:Int):Float
+	{
+		var p:Float = Math.pow(10, n);
+		x = x * p;
+		x = x >= 0 ? Math.floor(x + 0.5) : Math.ceil(x - 0.5);
+		return x / p;
+	}
+
 	// ---- Sollaxx Engine watermark ----
 	var watermarkTxt:FlxText;
 	public static var watermarkTag:String = 'Sollaxx Engine Classic';
@@ -5315,6 +5542,12 @@ class PlayState extends MusicBeatState
 	// ---- classic (0.2.5) opponent idle helpers ----
 	var lastOpponentSustainHit:Float = -100000;
 
+	/** Classic Opponent Idle only applies once the song has started (not during the countdown). */
+	function classicIdleActive():Bool
+	{
+		return ClientPrefs.data.classicIdle && !startingSong;
+	}
+
 	/** True while the camera section is focused on the opponent. */
 	function isCameraOnOpponent():Bool
 	{
@@ -5344,7 +5577,7 @@ class PlayState extends MusicBeatState
 		// 0.2.5: the opponent only bops while the camera is NOT on them, and then it
 		// may cut off its own sing pose (unless it is still holding a note).
 		// Dad / Pico / Monster loop their idle anyway, so they skip the gate.
-		var dadGated:Bool = ClientPrefs.data.classicIdle && !dad.loopsIdle;
+		var dadGated:Bool = classicIdleActive() && !dad.loopsIdle;
 		var dadSinging:Bool = dad.animation.curAnim != null && dad.animation.curAnim.name.startsWith('sing');
 		if (beat % dad.danceEveryNumBeats == 0
 			&& dad.animation.curAnim != null
@@ -5378,7 +5611,7 @@ class PlayState extends MusicBeatState
 			// 0.2.5: the moment the camera goes to a must-hit section the opponent does its idle
 			// (cuts off a sing pose, restarts a frozen idle). Only a note it is still holding
 			// finishes first; the hold timer takes it to idle right after.
-			if (ClientPrefs.data.classicIdle && dad != null && dad.animation.curAnim != null
+			if (classicIdleActive() && dad != null && dad.animation.curAnim != null
 				&& SONG.notes[curSection].mustHitSection && !SONG.notes[curSection].gfSection && !opponentIsHolding())
 			{
 				dad.dance();
